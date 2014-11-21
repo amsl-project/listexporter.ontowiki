@@ -1,0 +1,47 @@
+<?php
+$config = Erfurt_App::getInstance()->getConfig();
+$urlBase = $config->urlBase;
+$translate = OntoWiki::getInstance()->translate;
+$exportUrl = $urlBase . "listexporter/export/"
+    . "?resourceQuery= " . urlencode($this->resourceQuery)
+    . "&valueQuery= " . urlencode($this->valueQuery);
+
+$exportUrlWithUris = $urlBase . "listexporter/export/"
+    . "?resourceQuery= " . urlencode($this->resourceQuery)
+    . "&valueQuery= " . urlencode($this->valueQuery)
+    . "&convertUris=false";
+
+$this->headScript()->prependScript(
+    'function showresQuery(){$("#resQuery").slideToggle(200);}
+    function showvalQuery(){$("#valQuery").slideToggle(200);}
+    function showmergeQuery(){$("#mergeQuery").slideToggle(200);}
+    function showAdvancedOptions(){$("#advanced-options").slideToggle(200);}
+    '
+);
+?>
+
+<h1>Download</h1>
+<div class="messagebox" style="">
+    <a href="<?php echo $exportUrl ?>"><?php echo $translate->_('Download as csv with labels') ?></a><br>
+    <a href="<?php echo $exportUrlWithUris ?>"><?php echo $translate->_('Download as csv with uris') ?></a>
+</div>
+
+<a href="javascript:showAdvancedOptions()"><?php echo $translate->_('advanced options') ?></a>
+<div id="advanced-options" style="display:none" class="messagebox">
+
+<strong>Resource Query</strong>
+<a href="javascript:showresQuery()"><?php echo $translate->_('show') ?></a><br>
+<div id="resQuery" class="messagebox" style="display:none">
+    <?php echo htmlentities($this->resourceQuery) ?>
+</div>
+<strong>Value Query</strong>
+<a href="javascript:showvalQuery()"><?php echo $translate->_('show') ?></a><br>
+<div id="valQuery" class="messagebox" style="display:none">
+    <?php echo htmlentities($this->valueQuery) ?>
+</div>
+<strong>Merged Query</strong>
+<a href="javascript:showmergeQuery()"><?php echo $translate->_('show') ?></a><br>
+<div id="mergeQuery" class="messagebox" style="display:none">
+    <?php echo htmlentities($this->query) ?>
+</div>
+</div>

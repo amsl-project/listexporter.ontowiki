@@ -1,0 +1,25 @@
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+@prefix doap: <http://usefulinc.com/ns/doap#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owconfig: <http://ns.ontowiki.net/SysOnt/ExtensionConfig/> .
+@prefix extension: <http://ns.ontowiki.net/Extensions/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix event: <http://ns.ontowiki.net/SysOnt/Events/> .
+@prefix : <https://github.com/AKSW/historyproxy/raw/master/doap.n3#> .
+
+<> foaf:primaryTopic :listexporter .
+:listexporter a doap:Project ;
+  doap:name "listexporter" ;
+  owconfig:privateNamespace <https://github.com/AKSW/history/raw/master/doap.n3#> ;
+  owconfig:enabled "false"^^xsd:boolean ;
+  owconfig:templates "templates" ;
+  owconfig:languages "languages/" ;
+  owconfig:defaultAction "view" ;
+  #owconfig:pluginEvent event:onQueryHistory ;
+  rdfs:label "Listexporter" ;
+  doap:description "OntoWiki Extension that exports a given list of instances" ;
+  owconfig:authorLabel "AKSW" ;
+  doap:maintainer <http://aksw.org> ;
+  doap:release :v1-0 .
+:v1-0 a doap:Version ;
+  doap:revision "1.0" .
