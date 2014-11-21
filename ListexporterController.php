@@ -20,7 +20,11 @@ class ListexporterController extends OntoWiki_Controller_Component
 
         $resourceQuery = $_GET['resourceQuery'];
         $valueQuery = $_GET['valueQuery'];
-        $filename = $_GET['filename'];
+        if (isset($_GET['filename'])) {
+            $filename = $_GET['filename'] . '_' . date("Ymd-His");
+        } else {
+            $filename = '_' . date("Ymd-His");
+        }
 
         $query = $this->mergeQueries($resourceQuery, $valueQuery);
 
@@ -79,22 +83,17 @@ class ListexporterController extends OntoWiki_Controller_Component
 
         // cut everything from FILTER (the sameTerm queries) of value query
         $positionOfFilter = strpos($valueQuery, 'FILTER');
-        if (strpos($valueQuery ,'OPTIONAL') !== false) {
-            $query = substr($valueQuery, 0, $positionOfFilter + 1);
-        } else {
-            $query = substr($valueQuery, 0, $positionOfFilter);
-        }
+        $query = substr($valueQuery, 0, $positionOfFilter);
 
         // extract where part from resource query
         $positionOfWhere = strpos($resourceQuery, 'WHERE {') + strlen('WHERE {');
         $query = trim($query); // remove trailing whitespaces
-        $query = rtrim($query, "}"); // remove trailing }
-//        $query = substr($query, 0, -1); // remove last }
+        $query .= " . ";
         $query .= substr($resourceQuery, $positionOfWhere);
 
         // remove LIMIT
         $positionOfLimit = strpos($query, 'LIMIT');
-        $query = substr($query, 0, $positionOfLimit); // $positionOfLimit = length - 1 --> } remains
+        $query = substr($query, 0, $positionOfLimit);
         return $query;
     }
 
