@@ -100,22 +100,55 @@ class ListexporterController extends OntoWiki_Controller_Component
     private function enrichWithTitles($result)
     {
         $titleHelper = new OntoWiki_Model_TitleHelper();
-        $lines = explode(PHP_EOL, $result);
+        $lines = explode("\r\n", $result);
         $resultWithTitles = null;
         foreach ($lines as $line) {
             $lineValues = str_getcsv($line);
-            $valueWithTitle = array();
+            $rowWithTitle = array();
             $isFirstElement = true;
             foreach ($lineValues as $value) {
                 if ($isFirstElement) {
-                    $valueWithTitle[] = $value;
+                    $rowWithTitle[] = $value;
                     $isFirstElement = false;
                 } else {
-                    $valueWithTitle[] = $titleHelper->getTitle($value);
+                    if ($this->isUrl($value)) {
+                        $title = $titleHelper->getTitle($value);
+                        $rowWithTitle[] = $title;
+                    } else {
+                        $rowWithTitle[] = $value;
+                    }
                 }
             }
-            $resultWithTitles .= implode(",", $valueWithTitle) . "\r\n";
+            $resultWithTitles .= $this->getCSV($rowWithTitle);
         }
         return $resultWithTitles;
+    }
+
+
+    /**
+     *  outputCSV creates a line of CSV and outputs it to browser
+     */
+    function outputCSV($row) {
+        $fp = fopen('php://output', 'w'); // this file actual writes to php output
+        fputcsv($fp, $row);
+        fclose($fp);
+    }
+
+    /**
+     *  getCSV creates a line of CSV and returns it.
+     */
+    function getCSV($row) {
+        ob_start(); // buffer the output ...
+        $this->outputCSV($row);
+        return ob_get_clean(); // ... then return it as a string!
+    }
+
+    /**
+     * FInd out if a string is a url.
+     * @param $text
+     * @return bool
+     */
+    function isUrl( $text ) {
+        return filter_var( $text, FILTER_VALIDATE_URL, FILTER_FLAG_HOST_REQUIRED) !== false;
     }
 }
