@@ -3,11 +3,11 @@
  * Listexporter component controller. This controller is used for demonstration and export
  * purposes of the listexporter.
  *
- * @category   OntoWiki
- * @package    Extensions_Listexporter
- * @author     Sebastian Nuck
- * @copyright  Copyright (c) 2014, {@link http://aksw.org AKSW}
- * @license    http://opensource.org/licenses/gpl-license.php GNU General Public License (GPL)
+ * This file is part of the {@link http://amsl.technology amsl} project.
+ *
+ * @author Sebastian Nuck
+ * @copyright Copyright (c) 2015, {@link http://ub.uni-leipzig.de Leipzig University Library}
+ * @license http://opensource.org/licenses/gpl-license.php GNU General Public License (GPL)
  */
 class ListexporterController extends OntoWiki_Controller_Component
 {
