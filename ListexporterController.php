@@ -88,7 +88,9 @@ class ListexporterController extends OntoWiki_Controller_Component
         // extract where part from resource query
         $positionOfWhere = strpos($resourceQuery, 'WHERE {') + strlen('WHERE {');
         $query = trim($query); // remove trailing whitespaces
-        $query .= " . ";
+        if(strrpos($query, '.') !== strlen($query) - 1){
+            $query .= " . ";
+        }
         $query .= substr($resourceQuery, $positionOfWhere);
 
         // remove LIMIT
