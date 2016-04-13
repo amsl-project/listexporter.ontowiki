@@ -83,7 +83,13 @@ class ListexporterController extends OntoWiki_Controller_Component
 
         // cut everything from FILTER (the sameTerm queries) of value query
         $positionOfFilter = strpos($valueQuery, 'FILTER');
-        $query = substr($valueQuery, 0, $positionOfFilter);
+        $endOfFilterClause = $this->calculateEndOfFilterClause($valueQuery, $positionOfFilter);
+        $queryBeforeFilter = substr($valueQuery, 0, $positionOfFilter);
+        $queryAfterFilter = substr($valueQuery, $endOfFilterClause);
+        $query = $queryBeforeFilter . $queryAfterFilter;
+        $startOfWhereClause = strpos($resourceQuery, 'WHERE {');
+        $endOfWhereClause = $this->calculateEndOfWhereClause($query, $startOfWhereClause);
+        $query = substr($query,0, $endOfWhereClause);
 
         // extract where part from resource query
         $positionOfWhere = strpos($resourceQuery, 'WHERE {') + strlen('WHERE {');
@@ -97,6 +103,50 @@ class ListexporterController extends OntoWiki_Controller_Component
         $positionOfLimit = strpos($query, 'LIMIT');
         $query = substr($query, 0, $positionOfLimit);
         return $query;
+    }
+
+    private function calculateEndOfFilterClause($query, $startOfFilterClause){
+        $braceCount = 0;
+        $anyBraceFound = false;
+        $endOfFilterClause = 0;
+        $queryLength = strlen($query);
+        for($pos = $startOfFilterClause; $pos < $queryLength; $pos++){
+            $char = substr($query, $pos, 1);
+            if($char === '('){
+                $anyBraceFound = true;
+                $braceCount++;
+            }
+            if($char === ')'){
+                $braceCount--;
+            }
+            if($anyBraceFound && $braceCount === 0){
+                $endOfFilterClause = $pos + 4;
+                break;
+            }
+        }
+        return $endOfFilterClause;
+    }
+
+    private function calculateEndOfWhereClause($query, $startOfWhereClause){
+        $braceCount = 0;
+        $anyBraceFound = false;
+        $endOfWhereClause = 0;
+        $queryLength = strlen($query);
+        for($pos = $startOfWhereClause; $pos < $queryLength; $pos++){
+            $char = substr($query, $pos, 1);
+            if($char === '{'){
+                $anyBraceFound = true;
+                $braceCount++;
+            }
+            if($char === '}'){
+                $braceCount--;
+            }
+            if($anyBraceFound && $braceCount === 0){
+                $endOfWhereClause = $pos;
+                break;
+            }
+        }
+        return $endOfWhereClause;
     }
 
     private function enrichWithTitles($result)
