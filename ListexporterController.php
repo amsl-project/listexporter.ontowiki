@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Listexporter component controller. This controller is used for demonstration and export
  * purposes of the listexporter.
@@ -11,36 +12,40 @@
  */
 class ListexporterController extends OntoWiki_Controller_Component
 {
+    private $resourceQuery;
+    private $valueQuery;
+    private $mergedQuery;
+
+    public function init()
+    {
+        parent::init();
+        $this->resourceQuery = unserialize(gzinflate($_GET['resourceQuery']));
+        $this->valueQuery = unserialize(gzinflate($_GET['valueQuery']));
+        $this->mergedQuery = $this->merge($this->resourceQuery, $this->valueQuery);
+    }
 
     public function exportAction()
     {
         $this->view->placeholder('main.window.title')->set('Listexporter');
         $this->addModuleContext('main.window.listexporter.export');
         OntoWiki::getInstance()->getNavigation()->disableNavigation();
-
-        $resourceQuery = $_GET['resourceQuery'];
-        $valueQuery = $_GET['valueQuery'];
+        
         if (isset($_GET['filename'])) {
             $filename = $_GET['filename'] . '_' . date("Ymd-His");
         } else {
             $filename = '_' . date("Ymd-His");
         }
-
-        $query = $this->mergeQueries($resourceQuery, $valueQuery);
-
+        
         $convertUris = true;
         if (isset($_GET['convertUris'])) {
             $convertUris = false;
         }
 
         //query selected model
-        $result = $this->_owApp->selectedModel->sparqlQuery(
-            $query,
-            array(
-                'result_format' => 'csv'
-            )
-        );
-
+        $result = $this->_owApp->selectedModel->sparqlQuery($this->mergedQuery->getSparql(), array(
+            'result_format' => 'csv'
+        ));
+        
         if ($convertUris) {
             $result = $this->enrichWithTitles($result);
         }
@@ -62,91 +67,36 @@ class ListexporterController extends OntoWiki_Controller_Component
         $this->view->placeholder('main.window.title')->set('Listexporter');
         $this->addModuleContext('main.window.listexporter.export');
         OntoWiki::getInstance()->getNavigation()->disableNavigation();
-
-        $resourceQuery = $_GET['resourceQuery'];
-        $valueQuery = $_GET['valueQuery'];
-
-        $query = $this->mergeQueries($resourceQuery, $valueQuery);
-
-        $this->view->resourceQuery = $resourceQuery;
-        $this->view->valueQuery = $valueQuery;
-        $this->view->query = $query;
+        
+        $this->view->resourceQuery = $this->resourceQuery;
+        $this->view->valueQuery = $this->valueQuery;
+        $this->view->mergedQuery = $this->mergedQuery;
     }
 
-    /*
-     * Merges the value query and the resource query.
-     */
-    private function mergeQueries($resourceQuery, $valueQuery)
+    private function merge($resourceQuery, $valueQuery)
     {
-        $this->view->resourceQuery = $resourceQuery;
-        $this->view->valueQuery = $valueQuery;
-
-        // cut everything from FILTER (the sameTerm queries) of value query
-        $positionOfFilter = strpos($valueQuery, 'FILTER');
-        $endOfFilterClause = $this->calculateEndOfFilterClause($valueQuery, $positionOfFilter);
-        $queryBeforeFilter = substr($valueQuery, 0, $positionOfFilter);
-        $queryAfterFilter = substr($valueQuery, $endOfFilterClause);
-        $query = $queryBeforeFilter . $queryAfterFilter;
-        $startOfWhereClause = strpos($resourceQuery, 'WHERE {');
-        $endOfWhereClause = $this->calculateEndOfWhereClause($query, $startOfWhereClause);
-        $query = substr($query,0, $endOfWhereClause);
-
-        // extract where part from resource query
-        $positionOfWhere = strpos($resourceQuery, 'WHERE {') + strlen('WHERE {');
-        $query = trim($query); // remove trailing whitespaces
-        if(strrpos($query, '.') !== strlen($query) - 1){
-            $query .= " . ";
+        $mergedQuery = new Erfurt_Sparql_Query2();
+        
+        // selection variables
+        foreach ($valueQuery->getProjectionVars() as $value) {
+            $mergedQuery->addProjectionVar($value);
         }
-        $query .= substr($resourceQuery, $positionOfWhere);
-
-        // remove LIMIT
-        $positionOfLimit = strpos($query, 'LIMIT');
-        $query = substr($query, 0, $positionOfLimit);
-        return $query;
-    }
-
-    private function calculateEndOfFilterClause($query, $startOfFilterClause){
-        $braceCount = 0;
-        $anyBraceFound = false;
-        $endOfFilterClause = 0;
-        $queryLength = strlen($query);
-        for($pos = $startOfFilterClause; $pos < $queryLength; $pos++){
-            $char = substr($query, $pos, 1);
-            if($char === '('){
-                $anyBraceFound = true;
-                $braceCount++;
-            }
-            if($char === ')'){
-                $braceCount--;
-            }
-            if($anyBraceFound && $braceCount === 0){
-                $endOfFilterClause = $pos + 4;
-                break;
+        
+        // where clause from resourceQuery
+        $where = $resourceQuery->getWhere();
+        
+        // + optionals from valueQuery
+        foreach ($valueQuery->getWhere()->getElements() as $value) {
+            if ($value instanceof Erfurt_Sparql_Query2_OptionalGraphPattern) {
+                $where->addElement($value);
             }
         }
-        return $endOfFilterClause;
-    }
-
-    private function calculateEndOfWhereClause($query, $startOfWhereClause){
-        $braceCount = 0;
-        $anyBraceFound = false;
-        $endOfWhereClause = 0;
-        $queryLength = strlen($query);
-        for($pos = $startOfWhereClause; $pos < $queryLength; $pos++){
-            $char = substr($query, $pos, 1);
-            if($char === '{'){
-                $anyBraceFound = true;
-                $braceCount++;
-            }
-            if($char === '}'){
-                $braceCount--;
-            }
-            if($anyBraceFound && $braceCount === 0){
-                $endOfWhereClause = $pos;
-                break;
-            }
-        }
-        return $endOfWhereClause;
+        $mergedQuery->setFroms($resourceQuery->getFroms());
+        $mergedQuery->setWhere($where);
+        $order = new Erfurt_Sparql_Query2_OrderClause();
+        $mergedQuery->setOrder($resourceQuery->getOrder());
+        
+        return $mergedQuery;
     }
 
     private function enrichWithTitles($result)
