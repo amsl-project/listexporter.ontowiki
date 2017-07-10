@@ -83,7 +83,7 @@ class ListexporterController extends OntoWiki_Controller_Component
         }
         
         // where clause from resourceQuery
-        $where = $resourceQuery->getWhere();
+        $where = clone $resourceQuery->getWhere();
         
         // + optionals from valueQuery
         foreach ($valueQuery->getWhere()->getElements() as $value) {

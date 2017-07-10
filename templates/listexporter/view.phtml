@@ -12,7 +12,8 @@ $urlBase = $config->urlBase;
 $translate = OntoWiki::getInstance()->translate;
 $resourceQuery = urlencode(gzdeflate(serialize($this->resourceQuery)));
 $valueQuery = urlencode(gzdeflate(serialize($this->valueQuery)));
-$exportUrl = $urlBase . "listexporter/export?resourceQuery=" . $resourceQuery  . "&valueQuery=" . $valueQuery;
+$resQueryString = $this->resourceQuery->getSparql();
+$exportUrl = $urlBase . "listexporter/export?valueQuery=" . $valueQuery  . "&resourceQuery=" . $resourceQuery;
 $exportUrlWithUris = $exportUrl . "&convertUris=false";
 
 $this->headScript()->prependScript(
